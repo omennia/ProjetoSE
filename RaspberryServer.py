@@ -25,6 +25,11 @@ def GetRequest():
 
     return 'Hello World'
 
+@app.route("/GetGameState")
+def GetGameState():
+    global GAME_STATE
+    return flask.jsonify(GAME_STATE)
+
 def MoveWon():
     if len(GAME_STATE[-1]) == N_DISKS:
         return True
