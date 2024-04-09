@@ -34,6 +34,8 @@
         <button onclick="GetState()">Get State</button>
 
         <div class="response" id="response"></div>
+
+        <div class="gameState" id="gameState"></div>
     </div>
 
     <script>
@@ -58,10 +60,12 @@
             } catch (error) {
                 responseElement.textContent = `Error: ${error.message}`;
             }
+
+            GetState();
         }
 
         async function GetState() {
-            const responseElement = document.getElementById('response');
+            const gameStateElement = document.getElementById('gameState');
             try {
                 const response = await fetch('http://192.168.135.57:8080/GetGameState', {
                     method: 'POST',
@@ -73,9 +77,9 @@
                 if (!response.ok) throw new Error('Network response was not ok.');
 
                 const data = await response.json();
-                responseElement.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+                gameStateElement.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (error) {
-                responseElement.textContent = `Error: ${error.message}`;
+                gameStateElement.textContent = `Error: ${error.message}`;
             }
         }
     </script>
