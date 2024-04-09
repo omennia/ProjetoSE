@@ -1,6 +1,8 @@
 import flask
+from flask_cors import CORS
 import time
 app = flask.Flask(__name__)
+CORS(app)
 
 N_TOWERS = 3
 N_DISKS = 3
@@ -16,7 +18,7 @@ NO_ERROR = ""
 GAME_WON = "GAME WON"
 MOVE_SUCESSFULL = "Move successful"
 
-@app.route('/AppMovePlayer')
+@app.route('/AppMovePlayer', methods=['POST'])
 def GetRequest():
     """
     Handles the GET request for moving a player. The request should include 'original' and 'destination' parameters
@@ -27,8 +29,8 @@ def GetRequest():
     """
 
     global GAME_STATE
-    original = flask.request.args.get('original', type=int) # Represents the tower we're moving from
-    destination = flask.request.args.get('destination', type=int) # Represents the tower we're moving to
+    original = int(flask.request.json.get('original')) # Represents the tower we're moving from
+    destination = int(flask.request.json.get('destination')) # Represents the tower we're moving to
     
     madeMove, error = TryMakeMove(original, destination)
     if madeMove:
@@ -41,7 +43,7 @@ def GetRequest():
                                               # later on, we will have the app printing this message to the screen
     return flask.jsonify(error)
 
-@app.route("/GetGameState")
+@app.route("/GetGameState", methods=['POST'])
 def GetGameState():
     """
     Handles the GET request for retrieving the current game state.
