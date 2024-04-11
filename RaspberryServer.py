@@ -1,6 +1,8 @@
 import flask
 from flask_cors import CORS
 import time
+from collections import deque
+
 app = flask.Flask(__name__)
 CORS(app)
 
@@ -136,8 +138,68 @@ def CheckLegality(original, destination):
     
     return (False, ILLEGAL_MOVE) # If none of the above conditions are met (the top disk of the destination tower is smaller than the top disk of the original tower), the move is illegal
 
-if __name__ == '__main__':
+
+@app.route('/ResetGameState', methods=['POST'])
+def ResetGame():
+    """
+    Resets the game state.
+    """
+    global GAME_STATE
     GAME_STATE = [[]]*N_TOWERS
     GAME_STATE[0] = list(range(N_DISKS, 0, -1))
+    return flask.jsonify(success=True)
+
+@app.route('/NextMove', methods=['POST'])
+def NextMove():
+    print(hanoi_next_move())
+    return flask.jsonify(hanoi_next_move())
+
+
+# sim duarte isto vem straight to chatgpt que eu sou preguiçosos e nao quero estar a implementar este trash
+# este codigo tb e merda anyway, vamos te4r de fazer melhgor eventualmente
+def hanoi_next_move():
+    # Define the target configuration (e.g., all disks in the last tower)
+    target = tuple(tuple() for _ in range(N_TOWERS - 1)) + (tuple(range(N_DISKS, 0, -1)),)
+
+    # Helper function to generate valid moves from current state
+    def generate_moves(state):
+        moves = []
+        for i, src in enumerate(state):
+            if src:  # There is something to move
+                for j in range(N_TOWERS):
+                    if i != j:  # Can't move within the same tower
+                        if not state[j] or state[j][-1] > src[-1]:  # Valid move
+                            new_state = list(map(list, state))
+                            disk = new_state[i].pop()
+                            new_state[j].append(disk)
+                            moves.append((tuple(map(tuple, new_state)), (i, j)))
+        return moves
+
+    # BFS to find the optimal move sequence
+    queue = deque([(tuple(map(tuple, GAME_STATE)), [])])
+    visited = set()
+    visited.add(tuple(map(tuple, GAME_STATE)))
+
+    while queue:
+        current_state, path = queue.popleft()
+
+        if current_state == target:
+            if path:
+                return path[0]  # Return the first move that leads to the solution
+            break
+
+        for next_state, move in generate_moves(current_state):
+            if next_state not in visited:
+                visited.add(next_state)
+                queue.append((next_state, path + [move]))
+
+    return None  # In case there is no move needed (already solved)
+
+
+
+
+if __name__ == '__main__':
+    GAME_STATE = [[] for _ in range(N_TOWERS)]
+    GAME_STATE[0] = list(range(N_DISKS, 0, -1))
     print(GAME_STATE)
-    app.run(host='0.0.0.0', port=8080)
+    app.run(host='0.0.0.0', port=8080, debug=True)
