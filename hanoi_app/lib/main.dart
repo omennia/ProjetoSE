@@ -1,10 +1,14 @@
 import 'dart:convert';
+import 'dart:ffi';
 
 import 'package:flutter/material.dart';
 import 'disk.dart'; // Assuming Disk widget is defined in disk.dart
 import 'rod.dart'; // Assuming Rod widget is defined in rod.dart
 import 'package:http/http.dart' as http;
+import 'package:pair/pair.dart'; // for using Pair
 // import 'dart:convert'; // for using jsonDecode
+
+import 'dart:developer';
 
 const String IP = '192.168.221.57';
 const String PORT = '8080';
@@ -24,19 +28,22 @@ class TowersOfHanoi extends StatefulWidget {
 }
 
 class _TowersOfHanoiState extends State<TowersOfHanoi> {
-  List<List<int>> rods = [
-    [3, 2, 1],
-    [],
-    []
-  ];
+  List<List<int>> rods = [[], [], []];
   final Map<int, Color> diskColors = {
     1: Colors.red,
     2: Colors.green,
-    3: Colors.blue
+    3: Colors.blue,
+    4: Colors.yellow,
+    5: Colors.purple
   };
-  bool isGameActive = false;
-  String waitingMessage = "Waiting for the robot to finish playing";
+  bool isLoading = false; // New state to indicate loading status
 
+  _TowersOfHanoiState() {
+    _resetGame();
+  }
+
+  bool isGameActive = true;
+  String waitingMessage = "Waiting for the robot to finish playing";
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,32 +57,35 @@ class _TowersOfHanoiState extends State<TowersOfHanoi> {
           ),
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(3, (index) => buildRod(context, index)),
+          Column(
+            children: [
+              Expanded(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children:
+                      List.generate(3, (index) => buildRod(context, index)),
+                ),
+              ),
+              // Additional UI components can go here if needed
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: ElevatedButton(
+              onPressed: _getNextMove,
+              child: Text("Generate Next Move"),
             ),
           ),
-          SwitchListTile(
-            title: Text(isGameActive ? "Game Active" : "Game Waiting"),
-            value: isGameActive,
-            onChanged: (bool value) {
-              setState(() {
-                isGameActive = value;
-              });
-            },
-          ),
-          if (!isGameActive) // Display waiting message if the game is not active
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                waitingMessage,
-                style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey),
+          if (isLoading)
+            Positioned(
+              top: 100, // Adjust based on your actual layout
+              left: 0,
+              right: 0,
+              child: Container(
+                alignment: Alignment.center,
+                child: const CircularProgressIndicator(),
               ),
             ),
         ],
@@ -83,33 +93,41 @@ class _TowersOfHanoiState extends State<TowersOfHanoi> {
     );
   }
 
+  void updateState(int source, int sink, int disk) async {
+    setState(() {
+      rods[sink].add(disk);
+      rods[source].remove(disk);
+    });
+    bool isGameWon = await checkIsGameWon();
+    if (isGameWon) {
+      _showWinningMessage();
+    }
+  }
+
   Widget buildRod(BuildContext context, int rodIndex) {
     return DragTarget<int>(
       onWillAcceptWithDetails: (DragTargetDetails<int> details) {
         // here we implement when to accept a player move
-        return isGameActive && rods[rodIndex].isEmpty
-            ? true
-            : rods[rodIndex].isEmpty ||
-                rods[rodIndex].last >
-                    details.data; // Only accept if the disk is smaller
-        // return isGameActive; // Only accept if the game is active
+        return isGameActive;
       },
-      onAcceptWithDetails: (DragTargetDetails<int> details) {
+      onAcceptWithDetails: (DragTargetDetails<int> details) async {
         if (!isGameActive) return; // Do nothing if the game is not active
         int sourceIndex = rods.indexWhere(
             (rod) => rod.contains(details.data) && rod.last == details.data);
 
-        setState(() {
-          rods[rodIndex].add(details.data);
-          rods[sourceIndex].remove(details.data);
-        });
+        // check with server:
+        Pair<bool, String> res = await makeMove(sourceIndex, rodIndex);
+        if (res.key == true) {
+          // setState(() {
+          //   rods[rodIndex].add(details.data);
+          //   rods[sourceIndex].remove(details.data);
+          // });
+          // Check if the player has won after the move
+          updateState(sourceIndex, rodIndex, details.data);
 
-        // Check if the player has won after the move
-        if (rods[2].length == 3 &&
-            rods[2][0] == 3 &&
-            rods[2][1] == 2 &&
-            rods[2][2] == 1) {
-          _showWinningMessage();
+          return;
+        } else {
+          log("Error: ${res.value}");
         }
       },
       builder: (context, candidateData, rejectedData) {
@@ -168,14 +186,6 @@ class _TowersOfHanoiState extends State<TowersOfHanoi> {
   }
 
   void _resetGame() async {
-    // setState(() {
-    //   rods = [
-    //     [3, 2, 1],
-    //     [],
-    //     []
-    //   ];
-    //   isGameActive = false; // Optionally reset the game to inactive state
-    // });
     await resetGameState();
     List<dynamic> cur = await getGameState();
     cur.map((dynamic list) {
@@ -188,6 +198,44 @@ class _TowersOfHanoiState extends State<TowersOfHanoi> {
       rods = cur as List<List<int>>;
       // isGameActive = false; // Optionally reset the game to inactive state
     });
+  }
+
+  void _getNextMove() async {
+    await getNextMove();
+
+    await getGameState();
+  }
+
+  Future<void> getNextMove() async {
+    try {
+      final response = await http.post(
+        Uri.parse('$HOST/NextMove'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        // If server returns OK response, parse the JSON
+        List<dynamic> jsonData = jsonDecode(response.body);
+        int source = jsonData[0];
+        int sink = jsonData[1];
+        int disk = jsonData[2];
+        await makeMove(source, sink);
+        updateState(source, sink, disk);
+
+        return;
+      } else {
+        // If the server did not return a 200 OK response,
+        // then throw an exception.
+        throw Exception('Failed to load new game state');
+      }
+    } catch (e) {
+      print('Error when sending state: $e');
+      if (e is http.ClientException) {
+        print('HTTP error: ${e.message}, URI: ${e.uri}');
+      }
+      throw Exception('Failed to send state: $e');
+    }
   }
 
   Future<void> resetGameState() async {
@@ -232,7 +280,7 @@ class _TowersOfHanoiState extends State<TowersOfHanoi> {
 
         List<dynamic> jsonData = jsonDecode(response.body);
 
-// Convert the List<dynamic> to a List<List<int>>
+        // Convert the List<dynamic> to a List<List<int>>
         List<List<int>> listOfIntLists =
             jsonData.map<List<int>>((dynamic list) {
           // Cast each element to a List<dynamic> and then map each element to int
@@ -242,6 +290,63 @@ class _TowersOfHanoiState extends State<TowersOfHanoi> {
         }).toList();
 
         return listOfIntLists;
+      } else {
+        // If the server did not return a 200 OK response,
+        // then throw an exception.
+        throw Exception('Failed to load new game state');
+      }
+    } catch (e) {
+      print('Error when sending state: $e');
+      if (e is http.ClientException) {
+        print('HTTP error: ${e.message}, URI: ${e.uri}');
+      }
+      throw Exception('Failed to send state: $e');
+    }
+  }
+
+  Future<Pair<bool, String>> makeMove(int source, int sink) async {
+    setState(() {
+      isLoading = true; // Start loading
+    });
+
+    try {
+      final response = await http.post(Uri.parse('$HOST/AppMovePlayer'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'original': source.toString(),
+            'destination': sink.toString(),
+          }));
+
+      if (response.statusCode == 200) {
+        List<dynamic> jsonData = jsonDecode(response.body);
+        return Pair(jsonData[0], jsonData[1]);
+      } else {
+        throw Exception('Failed to load new game state');
+      }
+    } catch (e) {
+      print('Error when sending state: $e');
+      if (e is http.ClientException) {
+        print('HTTP error: ${e.message}, URI: ${e.uri}');
+      }
+      throw Exception('Failed to send state: $e');
+    } finally {
+      setState(() {
+        isLoading = false; // Stop loading
+      });
+    }
+  }
+
+  Future<bool> checkIsGameWon() async {
+    try {
+      final response = await http.post(Uri.parse('$HOST/IsGameWon'),
+          headers: {'Content-Type': 'application/json'});
+
+      // Check if the response is successful
+      if (response.statusCode == 200) {
+        // If server returns OK response, parse the JSON
+
+        bool jsonData = jsonDecode(response.body);
+        return jsonData;
       } else {
         // If the server did not return a 200 OK response,
         // then throw an exception.
