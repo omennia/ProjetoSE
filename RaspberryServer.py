@@ -7,7 +7,7 @@ app = flask.Flask(__name__)
 CORS(app)
 
 N_TOWERS = 3
-N_DISKS = 3
+N_DISKS = 2
 GAME_STATE = []
 
 ILLEGAL_MOVE = "Illegal move"
@@ -34,16 +34,24 @@ def GetRequest():
     original = int(flask.request.json.get('original')) # Represents the tower we're moving from
     destination = int(flask.request.json.get('destination')) # Represents the tower we're moving to
     
-    madeMove, error = TryMakeMove(original, destination)
+    (madeMove, error) = TryMakeMove(original, destination)
     if madeMove:
-        print(GAME_STATE)
-    
         # TODO :This is temporary
         if(MoveWon()):
-            return flask.jsonify(GAME_WON)    #
-        return flask.jsonify(MOVE_SUCESSFULL) # in these ones, we can just simply send that no error has occured, but for now we're doing this to print something to the screen
+            return flask.jsonify((madeMove, GAME_WON))    #
+        return flask.jsonify((madeMove, MOVE_SUCESSFULL)) # in these ones, we can just simply send that no error has occured, but for now we're doing this to print something to the screen
                                               # later on, we will have the app printing this message to the screen
-    return flask.jsonify(error)
+    return flask.jsonify((madeMove, error))
+
+@app.route("/IsGameWon", methods=['POST'])
+def IsGameWon():
+    """
+    Handles the GET request for checking if the game has been won.
+
+    Returns:
+        JSON: A JSON response indicating if the game has been won.
+    """
+    return flask.jsonify(MoveWon())
 
 @app.route("/GetGameState", methods=['POST'])
 def GetGameState():
@@ -54,6 +62,17 @@ def GetGameState():
         JSON: A JSON response containing the current game state.
     """
     return flask.jsonify(GAME_STATE)
+
+@app.route("/GetGameInfo", methods=['POST'])
+def GetGameInfo():
+    """
+    Handles the GET request for retrieving the game information.
+    Used when a player joins the game
+
+    Returns:
+        JSON: A JSON response containing the number of towers, disks in the game and the current game state.
+    """
+    return flask.jsonify((N_TOWERS, N_DISKS, GAME_STATE))
 
 def MoveWon():
     """
@@ -111,7 +130,7 @@ def MoveRobot():
     """
 
     print("Moving robot")
-    # time.sleep(1) # this time is supposed to simulate the time it takes for the robot to move
+    time.sleep(1) # this time is supposed to simulate the time it takes for the robot to move
     print("Robot moved")
     return (True, NO_ERROR);
 
@@ -151,8 +170,8 @@ def ResetGame():
 
 @app.route('/NextMove', methods=['POST'])
 def NextMove():
-    print(hanoi_next_move())
-    return flask.jsonify(hanoi_next_move())
+    (source, destination) = hanoi_next_move()
+    return flask.jsonify((source, destination, GAME_STATE[source][-1]))
 
 
 # sim duarte isto vem straight to chatgpt que eu sou preguiçosos e nao quero estar a implementar este trash

@@ -42,13 +42,13 @@
     </div>
 
     <script>
-        IP = "192.168.1.68"
+        IP = "192.168.221.57"
         PORT = "8080"
         HOST = "http://" + IP + ":" + PORT
+        const responseElement = document.getElementById('response');
+        const gameStateElement = document.getElementById('gameState');
 
         async function SendMove(original, destination) {
-            const responseElement = document.getElementById('response');
-
             try {
                 const response = await fetch(HOST + '/AppMovePlayer', {
                     method: 'POST',
@@ -70,7 +70,6 @@
         }
 
         async function GetState() {
-            const gameStateElement = document.getElementById('gameState');
             try {
                 const response = await fetch(HOST + '/GetGameState', {
                     method: 'POST',
@@ -97,9 +96,10 @@
                     }
                 });
 
-                if (!response.ok) throw new Error('Network response was not ok.');
+                const data = await response.json();
+                responseElement.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
             } catch (error) {
-                alert(`Error: ${error.message}`);
+                responseElement.textContent = `Error: ${error.message}`;
             }
 
             GetState();
@@ -107,7 +107,6 @@
 
         async function NextMove() {
             data = {}
-            const responseElement = document.getElementById('response');
             try {
                 const response = await fetch(HOST + '/NextMove', {
                     method: 'POST',

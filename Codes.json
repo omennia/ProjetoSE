@@ -1,0 +1,10 @@
+{
+    "ILLEGAL_MOVE": "Illegal move",
+    "ROBOT_FAILURE": "Robot failed to move",
+    "OUT_OF_BOUNDS": "Out of bounds",
+    "NO_DISKS": "No disks to move",
+    "UNKOWN_ERROR": "Unknown error",
+    "NO_ERROR": "",
+    "GAME_WON": "GAME WON",
+    "MOVE_SUCESSFULL": "Move successful"
+}
