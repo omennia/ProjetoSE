@@ -1,9 +1,11 @@
 import flask
 from flask_cors import CORS
 import time
+import serial
 from collections import deque
 
 app = flask.Flask(__name__)
+ser = serial.Serial('/dev/ttyACM0', 9600)
 CORS(app)
 
 N_TOWERS = 3
@@ -19,6 +21,36 @@ NO_ERROR = ""
 
 GAME_WON = "GAME WON"
 MOVE_SUCESSFULL = "Move successful"
+
+# Base angles for the arduino
+BASE_A = 45
+BASE_B = 90
+BASE_C = 135
+
+# Angles corresponding to each level on the arduino
+L1_SHOULDER = 30
+L1_WRIST = 150
+
+L2_SHOULDER = 35
+L2_WRIST = 145
+
+L3_SHOULDER = 40
+L3_WRIST = 140
+
+# Map the tower indices to the corresponding robot moves
+TOWER_TO_MOVE = {
+    0: BASE_A,
+    1: BASE_B,
+    2: BASE_C
+}
+
+# Map the tower levels to the corresponding robot moves
+LEVEL_TO_MOVE = {
+    0: (L1_SHOULDER, L1_WRIST),
+    1: (L2_SHOULDER, L2_WRIST),
+    2: (L3_SHOULDER, L3_WRIST)
+}
+
 
 @app.route('/AppMovePlayer', methods=['POST'])
 def GetRequest():
@@ -102,7 +134,7 @@ def TryMakeMove(original, destination):
     
     UpdateGameState(original, destination)
     
-    if MoveRobot():
+    if MoveRobot(original, destination):
         return (True, NO_ERROR)
     else:
         return (False, ROBOT_FAILURE)
@@ -121,7 +153,7 @@ def UpdateGameState(original, destination):
     GAME_STATE[destination] = GAME_STATE[destination] + [GAME_STATE[original][-1]]
     GAME_STATE[original] = GAME_STATE[original][:-1]
 
-def MoveRobot():
+def MoveRobot(original, destination):
     """
     Simulates the movement of the robot.
 
@@ -129,10 +161,35 @@ def MoveRobot():
         tuple: A tuple containing a boolean indicating if the move is legal and an error code.
     """
 
+    basePickup, shoulderPickup, wristPickup = DecodeMove(original)
+    baseDrop, shoulderDrop, wristDrop = DecodeMove(destination)
+
     print("Moving robot")
-    time.sleep(1) # this time is supposed to simulate the time it takes for the robot to move
+    command = f"MOVE {basePickup} {shoulderPickup} {wristPickup} {baseDrop} {shoulderDrop} {wristDrop}"
+    print(command);
+    ser.write(command.encode())  # Convert the string to bytes and send it
+
+    # time.sleep(1) # this time is supposed to simulate the time it takes for the robot to move
     print("Robot moved")
     return (True, NO_ERROR);
+
+def DecodeMove(tower):
+    """
+    Decodes the tower index into the corresponding robot moves.
+
+    Args:
+        tower (int): The tower index we're moving to.
+
+    Returns:
+        tuple: A tuple containing the base, shoulder and wrist angles for the robot.
+    """
+    base = TOWER_TO_MOVE[tower]
+    shoulder, wrist = LEVEL_TO_MOVE[len(GAME_STATE[tower])]
+    return (base, shoulder, wrist)
+
+    
+
+
 
 def CheckLegality(original, destination):
     """
