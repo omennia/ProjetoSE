@@ -11,10 +11,12 @@
 #define L1_SHOULDER 30
 #define L1_WRIST 150
 
-#define L2_SHOULDER 35
-#define L2_WRIST 145
+#define L2_SHOULDER 45
+#define L2_WRIST 135
 
 #define SPEED 20
+#define OFFSET 10
+
 void MoveAndPickup(int base, int shoulder, int elbow, int wristVertical, int wristRotation);
 void MoveAndDrop(int base, int shoulder, int elbow, int wristVertical, int wristRotation);
 void Dance();
@@ -27,6 +29,7 @@ Servo wrist_rot;
 Servo wrist_ver;
 Servo gripper;
 
+int curBase, curShoulder, curElbow, curWristVertical, curWristRotation, curGripper;
 // Braccio.ServoMovement(10,           BASE_B,  90, 0, 150,  0,   GRIPPER_OPEN);
 //   delay(1000);
 
@@ -54,10 +57,10 @@ void setup() {
     // Wrist Rotation   - Allowed values from 0 to 180 degrees
     // Gripper          - Allowed values from 10 to 73 degrees. 10: the toungue is open, 73: the gripper is closed.
 
-    // pinMode(12, OUTPUT); //   you need to set HIGH the pin 12
+    // pinMode(12, OUTPUT);  //   you need to set HIGH the pin 12
     // digitalWrite(12, HIGH);
 
-    // Braccio.begin(SOFT_START_DISABLED); // and set a proper parameter to disable the soft start
+    // Braccio.begin();  // and set a proper parameter to disable the soft start
     Serial.begin(9600);
 
     while (!Serial) {
@@ -65,7 +68,7 @@ void setup() {
     }
 
     Braccio.begin();
-    reset();
+    reset(0);
     // MoveAndPickup(BASE_A, L2_SHOULDER, 0, L2_WRIST, 0);
     // MoveAndDrop(BASE_C, L1_SHOULDER, 0, L1_WRIST, 0);
     // MoveAndPickup(BASE_A, L1_SHOULDER, 0, L1_WRIST, 0);
@@ -78,24 +81,44 @@ void setup() {
     // Dance();
 }
 
-void reset() {
-    Braccio.ServoMovement(SPEED, BASE_B, 90, 90, 90, 90, GRIPPER_CLOSED);
+void reset(int offset) {
+    Braccio.ServoMovement(SPEED, BASE_B + offset, 90, 90, 90, 90, GRIPPER_CLOSED);
+    curBase = BASE_B;
+    curShoulder = 90;
+    curElbow = 90;
+    curWristVertical = 90;
+    curWristRotation = 90;
+    curGripper = GRIPPER_CLOSED;
     delay(500);
 }
 
 void MoveAndPickup(int base, int shoulder, int elbow, int wristVertical, int wristRotation) {
+    Braccio.ServoMovement(SPEED, base, 90, 90, 90, 90, GRIPPER_CLOSED);
+    delay(500);
     Braccio.ServoMovement(SPEED, base, shoulder, elbow, wristVertical, wristRotation, GRIPPER_OPEN);
     delay(500);
     Braccio.ServoMovement(SPEED, base, shoulder, elbow, wristVertical, wristRotation, GRIPPER_CLOSED);
-    reset();
     delay(500);
+    int offset = 0;
+    if(base == BASE_A)
+      offset = OFFSET;
+    else if(base == BASE_C)
+      offset = -OFFSET;
+    reset(offset);
 }
 
 void MoveAndDrop(int base, int shoulder, int elbow, int wristVertical, int wristRotation) {
+    Braccio.ServoMovement(SPEED, base, 90, 90, 90, 90, GRIPPER_CLOSED);
+    delay(500);
     Braccio.ServoMovement(SPEED, base, shoulder, elbow, wristVertical, wristRotation, GRIPPER_CLOSED);
     delay(500);
     Braccio.ServoMovement(SPEED, base, shoulder, elbow, wristVertical, wristRotation, GRIPPER_OPEN);
-    reset();
+    int offset = 0;
+    if(base == BASE_A)
+      offset = OFFSET;
+    else if(base == BASE_C)
+      offset = -OFFSET;
+    reset(offset);
     delay(500);
 }
 
@@ -126,9 +149,8 @@ void loop() {
 
     if (Serial.available() > 0) {
         String data = Serial.readString();  // Read the incoming data
-        Serial.print("Received: ");
-        DecodeAndMove(data);  // Data is in the formate of "MOVE ORIGINAL_BASE ORIGINAL_SHOULDER ORIGINAL_WRIST DESTINATION_BASE DESTINATION_SHOULDER DESTINATION_WRIST"
-        Serial.println("MOVE DONE");
+        DecodeAndMove(data);                // Data is in the formate of "MOVE ORIGINAL_BASE ORIGINAL_SHOULDER ORIGINAL_WRIST DESTINATION_BASE DESTINATION_SHOULDER DESTINATION_WRIST"
+        Serial.println("ACK");
     }
 }
 

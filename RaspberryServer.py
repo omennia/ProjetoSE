@@ -163,11 +163,17 @@ def MoveRobot(original, destination):
 
     basePickup, shoulderPickup, wristPickup = DecodeMove(original)
     baseDrop, shoulderDrop, wristDrop = DecodeMove(destination)
-
+    print("Moving from " + str(basePickup) + " to " + str(baseDrop))
     print("Moving robot")
     command = f"MOVE {basePickup} {shoulderPickup} {wristPickup} {baseDrop} {shoulderDrop} {wristDrop}"
     print(command);
     ser.write(command.encode())  # Convert the string to bytes and send it
+
+    # Wait for the robot to send the ACK
+    while True:
+        response = ser.readline().decode().strip()
+        if response == "ACK":
+            break
 
     # time.sleep(1) # this time is supposed to simulate the time it takes for the robot to move
     print("Robot moved")
