@@ -10,7 +10,9 @@ import 'package:pair/pair.dart'; // for using Pair
 
 import 'dart:developer';
 
-const String IP = '192.168.221.57';
+// const String IP = '192.168.221.57';
+const String IP = '192.168.174.57';
+// const String IP = '192.168.227.57';
 const String PORT = '8080';
 const String HOST = 'http://$IP:$PORT';
 
