@@ -9,7 +9,7 @@ ser = serial.Serial('/dev/ttyACM0', 9600)
 CORS(app)
 
 N_TOWERS = 3
-N_DISKS = 2
+N_DISKS = 3
 GAME_STATE = []
 
 ILLEGAL_MOVE = "Illegal move"
@@ -23,19 +23,19 @@ GAME_WON = "GAME WON"
 MOVE_SUCESSFULL = "Move successful"
 
 # Base angles for the arduino
-BASE_A = 45
+BASE_A = 135
 BASE_B = 90
-BASE_C = 135
+BASE_C = 45
 
 # Angles corresponding to each level on the arduino
 L1_SHOULDER = 30
 L1_WRIST = 150
 
-L2_SHOULDER = 35
-L2_WRIST = 145
+L2_SHOULDER = 40
+L2_WRIST = 140
 
-L3_SHOULDER = 40
-L3_WRIST = 140
+L3_SHOULDER = 50
+L3_WRIST = 127
 
 # Map the tower indices to the corresponding robot moves
 TOWER_TO_MOVE = {
@@ -161,10 +161,13 @@ def MoveRobot(original, destination):
         tuple: A tuple containing a boolean indicating if the move is legal and an error code.
     """
 
-    basePickup, shoulderPickup, wristPickup = DecodeMove(original)
-    baseDrop, shoulderDrop, wristDrop = DecodeMove(destination)
+    basePickup, shoulderPickup, wristPickup = DecodeMove(original, False)
+    baseDrop, shoulderDrop, wristDrop = DecodeMove(destination, True)
     print("Moving from " + str(basePickup) + " to " + str(baseDrop))
     print("Moving robot")
+    # if(original == 0 and destination == 1):
+    #     baseDrop -= 15
+
     command = f"MOVE {basePickup} {shoulderPickup} {wristPickup} {baseDrop} {shoulderDrop} {wristDrop}"
     print(command);
     ser.write(command.encode())  # Convert the string to bytes and send it
@@ -179,7 +182,7 @@ def MoveRobot(original, destination):
     print("Robot moved")
     return (True, NO_ERROR);
 
-def DecodeMove(tower):
+def DecodeMove(tower, isDropping):
     """
     Decodes the tower index into the corresponding robot moves.
 
@@ -190,7 +193,10 @@ def DecodeMove(tower):
         tuple: A tuple containing the base, shoulder and wrist angles for the robot.
     """
     base = TOWER_TO_MOVE[tower]
-    shoulder, wrist = LEVEL_TO_MOVE[len(GAME_STATE[tower])]
+    level = len(GAME_STATE[tower]) 
+    if isDropping:
+        level = level - 1
+    shoulder, wrist = LEVEL_TO_MOVE[level]
     return (base, shoulder, wrist)
 
     

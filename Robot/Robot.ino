@@ -4,9 +4,9 @@
 #define GRIPPER_OPEN 10
 #define GRIPPER_CLOSED 73
 
-#define BASE_A 45
+#define BASE_A 135
 #define BASE_B 90
-#define BASE_C 135
+#define BASE_C 45
 
 #define L1_SHOULDER 30
 #define L1_WRIST 150
@@ -14,8 +14,12 @@
 #define L2_SHOULDER 45
 #define L2_WRIST 135
 
+#define L3_SHOULDER 60
+#define L3_WRIST 120
+
 #define SPEED 20
 #define OFFSET 10
+#define SHOULDER_OFFSET 7
 
 void MoveAndPickup(int base, int shoulder, int elbow, int wristVertical, int wristRotation);
 void MoveAndDrop(int base, int shoulder, int elbow, int wristVertical, int wristRotation);
@@ -62,12 +66,13 @@ void setup() {
 
     // Braccio.begin();  // and set a proper parameter to disable the soft start
     Serial.begin(9600);
-
     while (!Serial) {
         ;  // Wait for the serial port to connect
     }
 
     Braccio.begin();
+    // delay(1000);
+    // shoulder.write(90);
     reset(0);
     // MoveAndPickup(BASE_A, L2_SHOULDER, 0, L2_WRIST, 0);
     // MoveAndDrop(BASE_C, L1_SHOULDER, 0, L1_WRIST, 0);
@@ -82,9 +87,9 @@ void setup() {
 }
 
 void reset(int offset) {
-    Braccio.ServoMovement(SPEED, BASE_B + offset, 90, 90, 90, 90, GRIPPER_CLOSED);
+    Braccio.ServoMovement(SPEED, 180, 90 + SHOULDER_OFFSET, 90, 90, 90, GRIPPER_CLOSED);
     curBase = BASE_B;
-    curShoulder = 90;
+    curShoulder = 90 + SHOULDER_OFFSET;
     curElbow = 90;
     curWristVertical = 90;
     curWristRotation = 90;
@@ -92,32 +97,35 @@ void reset(int offset) {
     delay(500);
 }
 
+bool fromAtoB = false;
 void MoveAndPickup(int base, int shoulder, int elbow, int wristVertical, int wristRotation) {
-    Braccio.ServoMovement(SPEED, base, 90, 90, 90, 90, GRIPPER_CLOSED);
+    Braccio.ServoMovement(SPEED, base, 90 + SHOULDER_OFFSET, 90, 90, 90, GRIPPER_CLOSED);
     delay(500);
-    Braccio.ServoMovement(SPEED, base, shoulder, elbow, wristVertical, wristRotation, GRIPPER_OPEN);
+    Braccio.ServoMovement(SPEED, base, shoulder + SHOULDER_OFFSET, elbow, wristVertical, wristRotation, GRIPPER_OPEN);
     delay(500);
-    Braccio.ServoMovement(SPEED, base, shoulder, elbow, wristVertical, wristRotation, GRIPPER_CLOSED);
+    Braccio.ServoMovement(SPEED, base, shoulder + SHOULDER_OFFSET, elbow, wristVertical, wristRotation, GRIPPER_CLOSED);
     delay(500);
     int offset = 0;
-    if(base == BASE_A)
-      offset = OFFSET;
-    else if(base == BASE_C)
-      offset = -OFFSET;
+    if (base == BASE_A) {
+        offset = OFFSET;
+    } else if (base == BASE_C)
+        offset = -OFFSET;
+
     reset(offset);
 }
 
 void MoveAndDrop(int base, int shoulder, int elbow, int wristVertical, int wristRotation) {
-    Braccio.ServoMovement(SPEED, base, 90, 90, 90, 90, GRIPPER_CLOSED);
+    Braccio.ServoMovement(SPEED, base, 90 + SHOULDER_OFFSET, 90, 90, 90, GRIPPER_CLOSED);
     delay(500);
-    Braccio.ServoMovement(SPEED, base, shoulder, elbow, wristVertical, wristRotation, GRIPPER_CLOSED);
+    Braccio.ServoMovement(SPEED, base, shoulder + SHOULDER_OFFSET, elbow, wristVertical, wristRotation, GRIPPER_CLOSED);
     delay(500);
-    Braccio.ServoMovement(SPEED, base, shoulder, elbow, wristVertical, wristRotation, GRIPPER_OPEN);
+    Braccio.ServoMovement(SPEED, base, shoulder + SHOULDER_OFFSET, elbow, wristVertical, wristRotation, GRIPPER_OPEN);
     int offset = 0;
-    if(base == BASE_A)
-      offset = OFFSET;
-    else if(base == BASE_C)
-      offset = -OFFSET;
+    if (base == BASE_A)
+        offset = OFFSET;
+    else if (base == BASE_C)
+        offset = -OFFSET;
+
     reset(offset);
     delay(500);
 }
