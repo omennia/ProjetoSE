@@ -46,11 +46,11 @@ The project involves creating an interactive system that solves the Towers of Ha
 
 - **Arduino Braccio Robot Arm**
 
-- **Raspberry Pi 4 Model B**
+- **Raspberry Pi 3 Model B**
 
 - **Tower of Hanoi Disks and Board** (potentially 3D printed)
 
-- **Arduino Board (for Arduino Uno)**
+- **Arduino Uno**
 
 - **Cables for Arduino and Connections**
 
