@@ -8,16 +8,7 @@
 #define BASE_B 90
 #define BASE_C 45
 
-#define L1_SHOULDER 30
-#define L1_WRIST 150
-
-#define L2_SHOULDER 45
-#define L2_WRIST 135
-
-#define L3_SHOULDER 60
-#define L3_WRIST 120
-
-#define SPEED 20
+#define SPEED 15
 #define OFFSET 10
 #define SHOULDER_OFFSET 7
 
@@ -53,17 +44,16 @@ void reset(int offset) {
     curWristVertical = 90;
     curWristRotation = 90;
     curGripper = GRIPPER_CLOSED;
-    delay(500);
+    // delay(500);
 }
 
-bool fromAtoB = false;
 void MoveAndPickup(int base, int shoulder, int elbow, int wristVertical, int wristRotation) {
     Braccio.ServoMovement(SPEED, base, 90 + SHOULDER_OFFSET, 90, 90, 90, GRIPPER_CLOSED);
-    delay(500);
+    // delay(500);
     Braccio.ServoMovement(SPEED, base, shoulder + SHOULDER_OFFSET, elbow, wristVertical, wristRotation, GRIPPER_OPEN);
-    delay(500);
+    delay(100);
     Braccio.ServoMovement(SPEED, base, shoulder + SHOULDER_OFFSET, elbow, wristVertical, wristRotation, GRIPPER_CLOSED);
-    delay(500);
+    // delay(500);
     int offset = 0;
     if (base == BASE_A) {
         offset = OFFSET;
@@ -75,9 +65,9 @@ void MoveAndPickup(int base, int shoulder, int elbow, int wristVertical, int wri
 
 void MoveAndDrop(int base, int shoulder, int elbow, int wristVertical, int wristRotation) {
     Braccio.ServoMovement(SPEED, base, 90 + SHOULDER_OFFSET, 90, 90, 90, GRIPPER_CLOSED);
-    delay(500);
+    // delay(500);
     Braccio.ServoMovement(SPEED, base, shoulder + SHOULDER_OFFSET, elbow, wristVertical, wristRotation, GRIPPER_CLOSED);
-    delay(500);
+    delay(100);
     Braccio.ServoMovement(SPEED, base, shoulder + SHOULDER_OFFSET, elbow, wristVertical, wristRotation, GRIPPER_OPEN);
     int offset = 0;
     if (base == BASE_A)
@@ -86,16 +76,7 @@ void MoveAndDrop(int base, int shoulder, int elbow, int wristVertical, int wrist
         offset = -OFFSET;
 
     reset(offset);
-    delay(500);
-}
-
-void Dance() {
-    while (true) {
-        Braccio.ServoMovement(SPEED, BASE_A, 90, 90, 90, 90, GRIPPER_OPEN);
-        Braccio.ServoMovement(SPEED, BASE_B, 70, 70, 70, 70, GRIPPER_CLOSED);
-        Braccio.ServoMovement(SPEED, BASE_C, 90, 90, 90, 90, GRIPPER_OPEN);
-        Braccio.ServoMovement(SPEED, BASE_B, 70, 70, 70, 70, GRIPPER_CLOSED);
-    }
+    // delay(500);
 }
 
 void loop() {
