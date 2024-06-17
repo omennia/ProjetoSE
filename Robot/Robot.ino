@@ -34,56 +34,15 @@ Servo wrist_ver;
 Servo gripper;
 
 int curBase, curShoulder, curElbow, curWristVertical, curWristRotation, curGripper;
-// Braccio.ServoMovement(10,           BASE_B,  90, 0, 150,  0,   GRIPPER_OPEN);
-//   delay(1000);
-
-//   Braccio.ServoMovement(10,           BASE_A,  30, 0, 150,  0,   GRIPPER_OPEN);
-//   delay(1000);
-//   reset();
-
-//   Braccio.ServoMovement(10,           BASE_C,  30, 0, 150,  0,   GRIPPER_OPEN);
-//   delay(1000);
 
 void setup() {
-    // Initialization functions and set up the initial position for Braccio
-    // All the servo motors will be positioned in the "safety" position:
-    // Base (M1):90 degrees
-    // Shoulder (M2): 45 degrees
-    // Elbow (M3): 180 degrees
-    // Wrist vertical (M4): 180 degrees
-    // Wrist rotation (M5): 90 degrees
-    // gripper (M6): 10 degrees
-
-    // Base             - Allowed values from 0 to 180 degrees
-    // Shoulder         - Allowed values from 15 to 165 degrees
-    // Elbow            - Allowed values from 0 to 180 degrees
-    // Wrist Vertical   - Allowed values from 0 to 180 degrees
-    // Wrist Rotation   - Allowed values from 0 to 180 degrees
-    // Gripper          - Allowed values from 10 to 73 degrees. 10: the toungue is open, 73: the gripper is closed.
-
-    // pinMode(12, OUTPUT);  //   you need to set HIGH the pin 12
-    // digitalWrite(12, HIGH);
-
-    // Braccio.begin();  // and set a proper parameter to disable the soft start
     Serial.begin(9600);
     while (!Serial) {
         ;  // Wait for the serial port to connect
     }
 
     Braccio.begin();
-    // delay(1000);
-    // shoulder.write(90);
     reset(0);
-    // MoveAndPickup(BASE_A, L2_SHOULDER, 0, L2_WRIST, 0);
-    // MoveAndDrop(BASE_C, L1_SHOULDER, 0, L1_WRIST, 0);
-    // MoveAndPickup(BASE_A, L1_SHOULDER, 0, L1_WRIST, 0);
-    // MoveAndDrop(BASE_C, L2_SHOULDER, 0, L2_WRIST, 0);
-
-    // MoveAndPickup(BASE_C, L2_SHOULDER, 0, L2_WRIST, 0);
-    // MoveAndDrop(BASE_A, L1_SHOULDER, 0, L1_WRIST, 0);
-    // MoveAndPickup(BASE_C, L1_SHOULDER, 0, L1_WRIST, 0);
-    // MoveAndDrop(BASE_A, L2_SHOULDER, 0, L2_WRIST, 0);
-    // Dance();
 }
 
 void reset(int offset) {
@@ -140,21 +99,6 @@ void Dance() {
 }
 
 void loop() {
-    /*
-    Step Delay: a milliseconds delay between the movement of each servo.  Allowed values from 10 to 30 msec.
-    M1=base degrees. Allowed values from 0 to 180 degrees
-    M2=shoulder degrees. Allowed values from 15 to 165 degrees
-    M3=elbow degrees. Allowed values from 0 to 180 degrees
-    M4=wrist vertical degrees. Allowed values from 0 to 180 degrees
-    M5=wrist rotation degrees. Allowed values from 0 to 180 degrees
-    M6=gripper degrees. Allowed values from 10 to 73 degrees. 10: the toungue is open, 73: the gripper is closed.
-    */
-    // Return to the start position.
-    // Braccio.ServoMovement(20,         0,   90, 180,  180,  90, 73);
-
-    // //Open the gripper
-    // Braccio.ServoMovement(20,         0,   90, 180,  180,  90, 10 );
-
     if (Serial.available() > 0) {
         String data = Serial.readString();  // Read the incoming data
         DecodeAndMove(data);                // Data is in the formate of "MOVE ORIGINAL_BASE ORIGINAL_SHOULDER ORIGINAL_WRIST DESTINATION_BASE DESTINATION_SHOULDER DESTINATION_WRIST"

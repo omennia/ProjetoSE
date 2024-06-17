@@ -165,8 +165,6 @@ def MoveRobot(original, destination):
     baseDrop, shoulderDrop, wristDrop = DecodeMove(destination, True)
     print("Moving from " + str(basePickup) + " to " + str(baseDrop))
     print("Moving robot")
-    # if(original == 0 and destination == 1):
-    #     baseDrop -= 15
 
     command = f"MOVE {basePickup} {shoulderPickup} {wristPickup} {baseDrop} {shoulderDrop} {wristDrop}"
     print(command);
@@ -178,7 +176,6 @@ def MoveRobot(original, destination):
         if response == "ACK":
             break
 
-    # time.sleep(1) # this time is supposed to simulate the time it takes for the robot to move
     print("Robot moved")
     return (True, NO_ERROR);
 
@@ -243,8 +240,6 @@ def NextMove():
     return flask.jsonify((source, destination, GAME_STATE[source][-1]))
 
 
-# sim duarte isto vem straight to chatgpt que eu sou preguiçosos e nao quero estar a implementar este trash
-# este codigo tb e merda anyway, vamos te4r de fazer melhgor eventualmente
 def hanoi_next_move():
     # Define the target configuration (e.g., all disks in the last tower)
     target = tuple(tuple() for _ in range(N_TOWERS - 1)) + (tuple(range(N_DISKS, 0, -1)),)
