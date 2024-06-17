@@ -171,7 +171,7 @@ To set up and use the system, follow these steps:
 
    - Power up the Raspberry Pi and Arduino.
 
-   - Start the mobile application and connect to the Raspberry Pi.
+   - Start the mobile application and the server.
 
    - Use the mobile application to control the puzzle-solving process.
 
