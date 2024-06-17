@@ -179,8 +179,10 @@ To set up and use the system, follow these steps:
 
 ## Contributors
 
+- Marco Gonçalves (202007512)
+
 - Duarte Nóbrega (202005727)
 
 - Hugo Cardante (202002762)
 
-- Marco Gonçalves (202007512)
+
